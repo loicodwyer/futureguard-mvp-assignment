@@ -1,0 +1,12 @@
+{
+    "dates": ["2025-03-01", "2025-03-02", "2025-03-03", "2025-03-04", "2025-03-05"],
+    "median": [10000, 10200, 10350, 10400, 10600],
+    "p5":     [ 8000,  7900,  7800,  7700,  7600],
+    "p95":    [12000, 12300, 12600, 12800, 13000],
+    "recommendations": [
+      "Top-up €5 000 to avoid overdraft in 95 % of scenarios.",
+      "Cut discretionary spend by 10 %.",
+      "Enable low-balance alerts."
+    ]
+  }
+  

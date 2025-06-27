@@ -368,92 +368,99 @@ Additonally, there is no authentication on these endpoints (since it’s an inte
 
 ## Frontend Features and User Flow
 
-The FutureGuard Flutter app provides a simple and clean user interface to interact with the risk analysis system. Here is an outline of the main features of the UI and the typical user interaction flow: 
+The FutureGuard Flutter app presents a neat and intuitive user interface to interact with the risk analysis system. Following is a brief description of the main features of the UI and the overall user interaction flow:
 
-1. User Selection & Overview (Home Tab): When the app starts, it opens on the Overview tab. At the top, there are controls for the user to select:
-    - User ID: A dropdown menu allows switching between different user profiles (here between 1–100). Since this is a prototype, this simulates selecting a logged-in user’s account. In a real app, the user would be implicitly known after login, but here you can toggle to see different synthetic profiles.
-    - Start Date: A date picker button shows the current start date for analysis (default might be the current date or a recent date). The user can pick a different date, which essentially means “I want to see my data up to this date, and forecast after it.” This could be used to see what the analysis looked like at a past point in time or simply to control the snapshot of transactions shown.
-    - Horizon: A dropdown for forecast horizon in days (options like 30, 61, 92, 183, 365 days). This determines how far ahead the risk analysis will predict into the future.
+1. User Selection & Overview (Home Tab): The app is in the Overview tab when opened. On top are controls to allow the user to select:
+    - User ID: There is a dropdown to toggle between various user profiles (here, between 1–100). Since it's a prototype, this is simulating selecting a logged-in user's account. In an actual app, the user would be implicitly known once logged in, but here you can toggle to view various synthetic profiles.    
+    - Start Date: A date picker button displays the current start date to examine (default may be current date or recent date). The user may specify an alternative date, which is really saying "I'd like to view my data up to and including this date and project thereafter." It might be utilized in viewing what the analysis would have looked like some time ago or simply for managing the snapshot of transactions displayed.
+    - Horizon: Drop-down menu for forecast horizon in days (i.e., 30, 61, 92, 183, 365 days). This specifies how far into the future the risk analysis will forecast.
+    
+    On changing any of these, the app retrieves the account overview for the given parameters automatically (through OverviewState.fetch() invoking the API). The Overview page then renders:
 
-    After adjusting any of these, the app automatically fetches the account overview for the selected parameters (via OverviewState.fetch() calling the API). The Overview page then displays:
-    - Account Header: A card showing the user’s Name, IBAN, and current Balance (balance as of the start date). This gives context about the user’s finances at the starting point.
-    - Suggested Action icons: Four colored icons representing suggested actions or settings(the “widgets” from the API). In this MVP, they are non-interactive placeholders, but they demonstrate how a bank app usually looks (with great inspiration from the ING app).
-    - Recent Transactions List: A scrollable list of the latest transactions up to the start date. Each entry shows the date, counterparty, and amount (with color coding or +/- for credit/debit). This gives users a familiar transaction history view. It’s implemented with a custom TxTile widget for consistency in style. 
+    - Account Header: A card displaying the user's Name, IBAN, and opening Balance (balance at starting date). This provides background information regarding the user's funds at the beginning.
+    - Suggested Action icons: Four colored icons for suggested actions or settings(the "widgets" of the API). In this MVP, they are dummy items that do not do anything, but they illustrate how a bank app typically appears (with much inspiration from the ING app).
+    - Recent Transactions List: A list of the most recent transactions until the start date. Each entry displays the date, counterparty, and amount (with +/- or color coding for debit/credit). This provides the users with a recognizable transaction history presentation. It's done using a custom TxTile widget for styling consistency.
 
-    The design of this page follows Material Design defaults, with a light card for the header and chips for actions. The user can scroll through transactions to review their past spending. 
+    The layout of this page uses Material Design defaults, with a light card for the header and action chips. The user can navigate transactions to see their previous spending.
 
-2. Navigating to Risk Analysis (Risk Tab): The bottom navigation bar has a "Risk" tab (with an icon of a chart/trending-up). When the user taps this, it switches to the Risk Dashboard screen. Here’s the typical interaction on this screen:
-    - If the user has not yet run an analysis for the current selection, they will see a centered prompt. There is a large “Run analysis” button (with an icon) inviting them to start the risk analysis. This state occurs initially or whenever a new user or date range is selected and no analysis has been done yet.
-    - When the user taps "Run analysis", the app immediately provides feedback: it shows a  message like “We are working on your personalized AI-driven Risk Analysis. We will let you know once analysis is ready.” and a loading spinner appears on the screen. This indicates that the request is in progress. The UI is designed to handle the waiting period by disabling the run button and showing the spinner/text.
-    - After a short time (assuming the backend responds), the app receives the RiskResult and updates the state. A confirmation notification is shown saying “Risk analysis has been finalized!”, and then the dashboard content becomes visible (replacing the spinner).
+2. Navigating to Risk Analysis (Risk Tab): In the bottom navigation bar, there's a "Risk" tab (with an icon of a chart/trending-up). Upon tapping this, you're navigated to the Risk Dashboard screen. Following is the standard interaction on this screen:
+    - If the user hasn't analyzed yet for the current selection, they are presented with a centered prompt. A big "Run analysis" button (with icon) welcomes them to initiate the risk analysis. This state is shown initially or whenever a new user or date range is chosen and no analysis has been conducted yet.
+    - The moment the user clicks on "Run analysis", the app gives instant feedback: it displays a message such as "We are working on your personalized AI-driven Risk Analysis. We will let you know once analysis is ready." and a loading spinner appears on the screen. This conveys the fact that the request is being processed. The UI is programmed to manage the waiting time by disabling the run button and displaying the spinner/text.
+    - Once the backend has responded briefly (assuming it returns), the app receives the RiskResult and updates the state. It shows a confirmation message that says "Risk analysis has been finalized!", then the dashboard's content appears (instead of the spinner).
 
-3. Viewing the Risk Dashboard: With results available, the Risk tab becomes a scrollable dashboard of information:
-    - At the top, a refresh icon and “Run analysis again” button is available. The user can re-run the analysis on demand (for example, if they have adjusted any scenario parameters).
-    - Next is the Fan Chart. The fan chart is interactive: hovering or tapping can display tooltips of the exact values (the `fl_chart` library supports showing a dot and label on touch events, which is enabled in the chart configuration). This helps users get exact numbers for specific dates if needed.
-    - The fan chart clearly shows two regions: the historical actual balance (plotted up to the start date) and the forecast region. For instance, historical is plotted in blue, and the forecast median in orange with the orange shaded band for 5th and 95th percentile range. This visual design aligns with typical financial forecast charts (sometimes called "fan charts" in economics).
-    - Just below the chart, the Insights card appears. This is a Material card with the header “Insights”. Each insight is on a new line and centered. The insights give context such as worst-case outcomes for example and the Value at Risk.
-    - Following insights, the Recommendations card is shown (titled “Recommendations”). This contains a bulleted list of up to 3 recommendations. These recommendations are typically action-oriented (e.g., “Cut monthly spending by 9% to slow the deficit”). They are generated by simple rules in the backend.
-    - Finally, the Download ZIP button is displayed (centered). This button allows the user to save the analysis report with the two files aforementioned (CSV + PNG files).
+3. Displaying the Risk Dashboard: With results present, the Risk tab is now a scrollable dashboard of data:
 
-All of this content is within a ScrollView so the user can scroll if it doesn’t fit on one screen (especially on smaller devices). 
+    - A refresh button and "Run analysis again" is present at the top. The user can re-run the analysis as required (e.g., if they have changed some scenario parameters).
+    - And then there is the Fan Chart. The fan chart is interactive: hover or tap can show tooltips of the precise values (the `fl_chart` library does support displaying a dot and label on touch events, which we activate in the chart configuration). This allows users to obtain precise figures for particular dates if required.
+    - The fan chart must represent two areas clearly: the historical actual balance (plotted up to the start date) and the forecast area. E.g., historical in blue, forecast median in orange with orange shaded area for 5th and 95th percentile range. This is the standard form of financial forecast graphs (sometimes also referred to as "fan charts" in economics).
+    - Below the chart, the Insights card is displayed. It is a Material card with the title "Insights". There is a new line for each insight and it is centered. The insights place things in perspective like worst-case scenarios for instance and the Value at Risk.
+    - After insights, the Recommendations card is displayed (title "Recommendations"). This is a bulleted list of up to 3 recommendations. These are usually action-oriented (e.g., "Reduce monthly expenses by 9% to decelerate the deficit"). They are created by backend simple rules.
+    - Finally, the Download ZIP button is displayed (centered). This button allows the user to download the analysis report in the two files discussed (CSV + PNG files).
+
+    All this inside a ScrollView so that the user can scroll if it won't all fit on one screen (particularly on smaller devices).
 
 **User Interaction Flow Summary:**
 
-1. The user opens the app (no login required in MVP; by default user ID 10 and some date/horizon might be pre-selected).
-2. On Overview tab, user reviews their current balance and transactions. They might change the user ID to see another profile’s data, or pick a different date range. The overview updates accordingly (triggering a new API call each time).
-3. The user navigates to Risk tab. Initially, sees the prompt and hits Run analysis.
-4. The app calls the API and shows a loading state. The user waits for around 30 minutes.
-5. The results appear. The user sees the chart of possible futures and notices, for example, that the shaded area widens over time (showing uncertainty growing). They tap on the chart near the end to see what the worst-case value might be. The tooltip shows for example “€-500 at 5%”.
+1. The user opens the app (no login in MVP; default user ID 10 and some date/horizon may be pre-selected by default).
+2. On Overview tab, the user is presented with his/her current balance and transactions. He/she can modify the user ID to view someone else's information, or select a different date range. The overview is updated accordingly (a new API call is made every time it is performed).
+3. The user goes to Risk tab. Initially, sees the prompt and clicks Run analysis.
+4. The app invokes the API and displays a loading indicator. The user waits for approximately 30 minutes.
+5. The results are displayed. The user examines the graph of potential futures and notices, for instance, that the shaded area widens over time (to indicate increasing uncertainty). They click at the tip on the graph to find out what the worst-case value could be. The tooltip displays for instance "€-500 at 5%".
 6. The user can read the Insights and Recommendations. 
-8. The user decides to tap Download analysis to keep a copy. The app saves the zip file. 
-9. Satisfied, the user may go back to Overview or change horizon to see a different forecast. They select say 92 days horizon and run again. The app repeats the process, now showing a different fan chart. 
-10. The user can also experiment with different user profiles using the dropdown (simulating how it might work for different individuals with different financial profiles).
+7. The user chooses to click Download analysis in order to retain a copy. The app downloads the zip.
+8. Satisfied, the user may go back to Overview or change horizon to see a different forecast. They select say 92 days horizon and run again. The app repeats the process, now showing a different fan chart. 10. The user also has the opportunity to try various user profiles from the dropdown (how it would be with different people who possess different financial profiles). 
 
-*Note on **file technicalities**:* If you are using VS Code, make sure that once you have a new window open, to select `file` on the top left and then `Open Workspace from File`. Once you have selected the futureguard_app, you will be able to see the workspace in VS Code. Once the workspace is open, you can open the terminal and write `flutter pub get` and press enter. Then, write `flutter run -d chrome` and you will have the app open up in chrome. 
+*Note on **file technicalities**:* If you're working with VS Code, ensure that when opening a new window, you go to `file` at the top left and then `Open Workspace from File`. Once you have opened the futureguard_app, you can see the workspace in VS Code. Once you have opened the workspace, you can open the terminal and enter `flutter pub get`. Then, execute `flutter run -d chrome` and the app will launch in chrome.
 
-*Note on **State and Navigation**:* The app maintains the selected state when switching tabs. So the user can flip between Overview and Risk tabs to cross-check information without re-entering selections. For example, if one sees a large expense in transactions and wonder how it affected the analysis, one can switch to Risk (which is already showing results for that same date range). If they go back and select a different date, the risk result is considered stale (since it was for a previous date) and they’d run it again for the new context. 
+*Note on **State and Navigation**:* The app maintains the selected state when changing tabs. So the user can switch back and forth between Overview and Risk tabs to cross-reference without needing to re-enter selections.
+For example, if one sees an enormous transaction cost and wonders what effect it has on the analysis, one can go to Risk (which already has results for the same date range). If they go back and select a different date, the risk result is stale (since it was for an older date) and they'd rerun it for the new context.
 
-**Planned Enhancements**: While the current UI is functional, there are plans to enhance it further:
-- Adding interactive sliders for custom scenario stress tests (e.g., a slider to simulate “income loss %” or “extra monthly expense”). The architecture already has placeholders in ScenarioState for such parameters. A future update would allow the user to adjust these before running the analysis to see how the outcomes change under custom scenarios (for instance, simulate a 20% pay cut and then run analysis).
-- A dedicated Settings or More tab (the third tab is a placeholder now) for things like account settings, toggling risk tolerance, or adjusting assumptions.
-- Polished UI/UX: Aligning the design with the bank’s theme, adding animations (maybe an animation while simulations run or a nicer transition to results), etc.
-- Tooltips and Info Modals: Provide explanations for terms like VaR or Monte Carlo if the user taps an info icon. For now, the target audience (investor or tech reviewer) is expected to understand, but end-users might need onboarding.
+**Planned Enhancements**: Although the present UI is usable, some enhancements are planned to be made:
 
-The Flutter frontend shows how complex data (the result of thousands of simulations) can be presented in a concise and user-friendly way. Charts, combined with short textual insights, make it easier to grasp probabilistic outcomes, fulfilling the project’s aim to improve user understanding of financial risk.
+- Incorporating interactive sliders to enable user-specifiable scenario stress tests (for example, a slider to model "income loss %" or "incremental monthly spending"). The architecture already includes placeholders in ScenarioState for parameters such as these. A future release would expose these as user-controllable prior to running the analysis to determine how results vary under user-defined scenarios (for example, simulate a 20% salary reduction and then run analysis). 
+- A separate Settings or More tab (third tab is a placeholder currently) for account settings, risk tolerance toggle, or changing assumptions. 
+- Polished UI/UX: Theming the design to the bank, including animations (perhaps an animation during simulations run or a prettier transition to results), etc. 
+- Tooltips and Info Modals: Display definitions for terms such as VaR or Monte Carlo when the user clicks on an info icon. So far, the intended audience (investor or tech reviewer) is assumed to be knowledgeable but end-users may require onboarding. 
+
+The Flutter frontend demonstrates how to present complex data (the results of thousands of simulations) in an interpretable and concise form. Graphs, together with concise text-based conclusions, make probabilistic results easy to understand, fulfilling the project mission to make financial risk easier to grasp for users.
 
 ## Deployment Guide
-Currently, FutureGuard is configured for local deployment and testing. Both the backend and frontend run on a developer’s machine. A full production or cloud deployment has not been implemented yet, but here are notes on how to deploy locally and considerations for eventual cloud deployment: 
+FutureGuard is now set up for local testing and deployment today. Both backend and frontend run on a developer's machine. There hasn't been full production or cloud deployment yet, but the following are some notes regarding local deployment and also some thoughts regarding future cloud deployment:
 
 **Local Deployment (Development):**
-- Follow the Setup and Installation steps to get the backend running on your machine (e.g., at http://127.0.0.1:8000) and the Flutter app running (either in an emulator or web browser).
-- Ensure that the Flutter app’s API base URL is pointing to your local backend. If using an Android emulator, use 10.0.2.2 as noted. If using a web browser, you might need to enable CORS on the FastAPI app (FastAPI’s CORSMiddleware) since browsers enforce CORS – but if you’re using Chrome with flutter run -d chrome, you might need to allow localhost or run with a flag. In development, you can configure FastAPI to allow http://127.0.0.1:*/ origins.
-- Run the backend with uvicorn (you can keep --reload for auto-reload during development). Keep that terminal open to see logs – it will log requests to endpoints, which is useful for debugging.
-- Run the Flutter app in debug mode. If using VS Code or Android Studio, you can put breakpoints or print logs in Dart to debug UI behavior or API responses.
-- Test the flow end-to-end: select a user, get overview, run analysis, see results. Check the terminal running the backend to see that the calls were received and completed (it will show HTTP 200 for endpoints called, or any errors/exceptions).
+- Complete the Setup and Installation instructions to have the backend up and running on your computer (for example, at http://127.0.0.1:8000) and the Flutter app up and running (in an emulator or browser). 
+- Set the API base URL in the Flutter application to your local backend. If you are using an Android emulator, use 10.0.2.2 as indicated. If you are using a browser, you may need to enable CORS on the FastAPI application (FastAPI's CORSMiddleware) because browsers implement CORS – but if you are using Chrome with flutter run -d chrome, you may need to permit localhost or run with a flag. During development, you can set FastAPI to enable http://127.0.0.1:* origins.
+- Run the backend using uvicorn (you can leave --reload for auto-reload while developing). Leave that window open to see logs. It will log requests to endpoints, which helps with debugging.
+- Run the Flutter application in debug mode. If you are using VS Code or Android Studio, you can insert breakpoints or print logs in Dart to debug UI flow or API responses.
+- End-to-end test the process: pick a user, get overview, execute analysis, view results. Monitor the terminal where the backend is running to see if the calls were attempted and finished (it will display HTTP 200 for called endpoints, or errors/exceptions).
 
-**Cloud/Server Deployment Recommendations:** (Not configured in this project, but guidelines for future)
-- Set up a proper live and dynamic database for persistent data instead of CSVs if moving to production.
-- The Flutter app would be distributed via the App Store/Play Store through the host banking app. 
-- For Networking & Security, the backend should be behind HTTPS (TLS) and possibly behind an API gateway. The app would need the domain of the API (e.g., api.futureguard.com) instead of localhost.
-- Scaling: Since FastAPI is asynchronous, it can handle many requests, but for CPU-heavy tasks (like running the trasnformers model or the thousands of simulations), one might want to scale out the service.
-- In the current state, cloud deployment is not yet integrated . Setting this up would be a next step when transitioning from MVP to a live pilot.
+**Cloud/Server Deployment Recommendations:** (Not installed in this project, but future recommendations)
+- Replace CSVs with a real live dynamic database for long-term data if moving to production.
+- The Flutter app would be published via the App Store/Play Store by the host bank app.
+- For Networking & Security, the backend must be behind HTTPS (TLS) and possibly behind an API gateway. The application would require the domain of the API (e.g., api.futureguard.com) rather than localhost. 
+- Scaling: As FastAPI is asynchronous, it can manage numerous requests, yet for CPU-bound tasks (such as executing the trasnformers model or the thousands of simulations), one would need to scale out the service.
+- Cloud deployment is not part of the present state. This would be set up as a future task as an MVP-to-live-pilot handover. 
 
-For now, any reviewer or developer can run FutureGuard locally using the instructions above. The focus was on building the functionality and not on deployment scripts that would be added once the project would move past MVP stage.
+For the time being, any developer or reviewer can test FutureGuard on their local machine by following the steps above. The priority was to build the functionality and not the deployment scripts that would be included once the project would have moved beyond MVP phase.
+
 
 ## Security Considerations
 
-As a prototype, FutureGuard has minimal security in place, but it’s important to note best practices and what should be addressed before any real-world deployment:
-- **Authentication & Authorization**: The current API does not enforce any authentication. Indeed, the user here can query any user’s data by ID. This was made for presentation purposes. In a real world application, this would be unacceptable. We would integrate with the bank’s authentication system (e.g., OAuth2 or JWT tokens in headers) to ensure the requesting user only accesses their own data. Each endpoint would validate the user’s identity and permissions (for example, `/account_overview/{user}` should ensure the session user matches `{user}`).
-- **Data Privacy**: Financial transaction data is highly sensitive. Even though our dataset is synthetic, in a real scenario all personal data must be handled according to GDPR and banking data standards. This means:
-    - Never expose more data than necessary in API responses.
-    - Possibly encrypt sensitive data at rest (if storing transactions or model outputs). The MVP stores in CSV. However, a production database should use encryption and access controls.
-- **Rate Limiting & Performance**: An attacker or even an overly keen user could spam the `/run_risk_analysis` endpoint which is computationally expensive. We should implement rate limiting (at API gateway or app level) to prevent denial of service or excessive load (e.g., limit to one analysis at a time per user, or X per minute). 
-- **Model Security**: Machine learning models can sometimes be exploited (through malicious input causing unexpected behavior). Here our input is limited and numeric, so not a big attack surface. But we should still ensure the model can handle edge cases (like all zero inputs, extreme values) without crashing or providing really bad results. 
-- **Dependency Security**: We rely on third-party libraries. It’s important to keep them updated to get security patches. For instance, if a vulnerability is found in FastAPI or TensorFlow, we’d need to update. Using a tool to monitor dependencies (like `pip-audit` or GitHub’s dependabot) is recommended.
-- **Frontend Security**: The Flutter app being on user devices means it could be inspected. While our app has no secrets (no API keys or hardcoded credentials), in a real integrated scenario we might use secure storage for auth tokens. Ensure not to log sensitive info in the app.
-- **Auditability**: For a financial tool, logging what analysis was done and when could be important. In a next iteration, one would add logging for actions like “User X ran analysis on date Y with horizon Z”. This would help in debugging and also in any user inquiries or compliance checks.
+As a prototype, FutureGuard has minimal security in place, but it’s important to note best practices and what should be addressed before any real-world deployment: 
 
-In summary, while the MVP is not secured for public use, it’s built in a way that adding security is straightforward (thanks to FastAPI’s design and Flutter’s flexibility). Before any real user data is used, the above measures must be implemented to protect user privacy and maintain trust.
+- **Authentication & Authorization**: Authentication is not implemented in the present API. In fact, the user in the example above can request any user's information by ID. This was left for demo purposes. In a production application, this would not be acceptable. We would have used the bank authentication system (i.e., OAuth2 or JWT tokens in headers) to make sure the requesting user only receives their own information. Every endpoint would verify the identity and permissions of the user (for instance, `/account_overview/{user}` would validate session user is `{user}`).
+- **Data Privacy**: Personal financial transactional data is highly sensitive. Although our dataset is fictional, in the real world all personal data needs to be processed according to GDPR and banking data regulations. That implies:
+    - Do not reveal more information than required in API responses.
+    - Possibly encrypt sensitive information at rest (in case transactions or model outputs are being stored). MVP stores in CSV, but a production database would include access controls and encryption.
+- **Rate Limiting & Performance**: An attacker or user might spam the `/run_risk_analysis` endpoint which is resource-intensive. We should rate limit (application or API gateway level) to avoid denial of service or overloading. (e.g., one analysis per user at a time, or X per minute).
+- **Model Security**: ML models can be vulnerable to exploitation (by crafted input causing unexpected behavior) from time to time. Our input here is numerical and small, so not a large attack surface. However, we do want to make sure the model will perform nicely with edge cases (e.g., all zeros inputs, extreme values) without crashing or outputting very bad results.
+- **Dependency Security**: We depend on third-party libraries. It's a good idea to keep up to date in order to receive security fixes. If, for example, a vulnerability were discovered in FastAPI or TensorFlow, we would want to upgrade. Using a tool to check for dependencies (such as `pip-audit` or dependabot on GitHub) is best practice.
+- **Frontend Security**: As the Flutter application is present on the users' devices, it can be examined. Although our application does not contain any secrets (no API keys or hardcoded credentials), in an integrated real-world scenario we would use secure storage to store auth tokens. Refrain from logging sensitive information in the app.
+- **Auditability**: As a financial instrument, it may be significant to log what analysis was executed and when. In a future release, one would incorporate logging on events such as "User X executed analysis on date Y with horizon Z". This would be useful for debugging purposes as well as in any user questions or compliance audits. 
+
+In summary, though the MVP isn't nailed down for public use, it's designed in such a manner that incorporating security doesn't prove to be challenging (courtesy of FastAPI's design and Flutter's versatility). The aforementioned measures need to be taken before any actual user data is utilized to ensure user privacy and gain trust.
+
+
 
 ## Scaling and Maintenance Notes
 As FutureGuard transitions from MVP to a production system, there are several considerations for scaling the system and maintaining it over time:
@@ -473,4 +480,6 @@ As FutureGuard transitions from MVP to a production system, there are several co
 - **User Feedback Loop**: As this is a new kind of feature for users, gathering user feedback and making iterative improvements is key. Maintenance is not just technical upkeep, but also ensuring the tool remains helpful. For instance, if users are confused by VaR, perhaps we add more explanation in-app. If a recommendation is ignored by 100% of users, maybe it’s not useful and should be changed.
 
 In essence, FutureGuard is built with scalability in mind (stateless backend, separate frontend), so scaling out horizontally is straightforward. The main heavy lifting is the ML and simulation – with proper optimization and possibly upgrading hardware (using cloud instances with more CPU or using vectorized libraries), the app can scale to handle many users. Maintenance will involve periodic updates to models and data, as well as codebase improvements as the code transitions from prototype quality to production quality (adding documentation, tests, and refactoring where necessary).
+
+
 
